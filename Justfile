@@ -24,6 +24,6 @@ update bindings:
     # Write marker
     echo "$VERSION" > "$MARKER"
 
-    rm $TARGET/guestfs/.gitignore
+    rm $TARGET/guestfs/.gitignore $TARGET/guestfs/go.mod
 
     echo "Installed to $TARGET"

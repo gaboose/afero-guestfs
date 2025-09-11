@@ -5,8 +5,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gaboose/afero-guestfs/libguestfs.org/guestfs"
 	"github.com/spf13/afero"
-	"libguestfs.org/guestfs"
 )
 
 type Fs struct {

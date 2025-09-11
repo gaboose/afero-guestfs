@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"time"
 
-	guestfs "libguestfs.org/guestfs"
+	"github.com/gaboose/afero-guestfs/libguestfs.org/guestfs"
 )
 
 type fileInfo struct {

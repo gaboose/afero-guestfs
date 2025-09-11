@@ -4,12 +4,9 @@ go 1.23.0
 
 toolchain go1.24.7
 
-replace libguestfs.org/guestfs => ./libguestfs.org/guestfs
-
 require (
 	github.com/spf13/afero v1.15.0
 	github.com/stretchr/testify v1.11.1
-	libguestfs.org/guestfs v1.56.2
 )
 
 require (

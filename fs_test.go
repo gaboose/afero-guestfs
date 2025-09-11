@@ -10,9 +10,9 @@ import (
 	"time"
 
 	aferoguestfs "github.com/gaboose/afero-guestfs"
+	"github.com/gaboose/afero-guestfs/libguestfs.org/guestfs"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
-	guestfs "libguestfs.org/guestfs"
 )
 
 //go:embed testdata/test1.img

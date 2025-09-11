@@ -3,7 +3,7 @@ package aferoguestfs
 import (
 	"os"
 
-	guestfs "libguestfs.org/guestfs"
+	"github.com/gaboose/afero-guestfs/libguestfs.org/guestfs"
 )
 
 type guestfsError struct {
