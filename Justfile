@@ -24,4 +24,6 @@ update bindings:
     # Write marker
     echo "$VERSION" > "$MARKER"
 
+    rm $TARGET/guestfs/.gitignore
+
     echo "Installed to $TARGET"
