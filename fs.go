@@ -2,6 +2,7 @@ package aferoguestfs
 
 import (
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/spf13/afero"
@@ -81,6 +82,21 @@ func (fs *Fs) Rename(oldname string, newname string) error {
 
 // Stat implements afero.Fs.
 func (fs *Fs) Stat(name string) (os.FileInfo, error) {
+	// calling Exists before Statns prevents a "No such file or directory"
+	// error from being printed by libguestfs
+	exists, err := fs.guestfs.Exists(name)
+	if err != nil {
+		return nil, wrapErr(err, name)
+	}
+
+	if !exists {
+		return nil, &os.PathError{
+			Op:   "exists",
+			Path: name,
+			Err:  syscall.ENOENT,
+		}
+	}
+
 	s, err := fs.guestfs.Statns(name)
 	if err != nil {
 		return nil, wrapErr(err, name)

@@ -135,7 +135,7 @@ func TestChtimes(t *testing.T) {
 	stat, err := gfs.Stat("/test.txt")
 	assert.Nil(t, err)
 
-	assert.Equal(t, stat.ModTime(), expected)
+	assert.Equal(t, expected, stat.ModTime().UTC())
 }
 
 func TestCreate(t *testing.T) {

@@ -51,10 +51,12 @@ func newFile(fs *Fs, name string, flag int, perm os.FileMode) (*file, error) {
 		return ret, nil
 	}
 
-	ret.stat, err = fs.Stat(name)
+	s, err := fs.guestfs.Statns(name)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, name)
 	}
+
+	ret.stat = newFileInfo(name, s)
 
 	if ret.stat.IsDir() && ret.writeAllowed() {
 		return nil, errors.New("is a directory")
