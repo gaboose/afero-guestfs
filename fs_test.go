@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -17,6 +18,8 @@ import (
 
 //go:embed testdata/test1.img
 var test1Img []byte
+
+var gfs *aferoguestfs.Fs
 
 func newGuestFs(diskPath, partDev string) (g *guestfs.Guestfs, close func() error, err error) {
 	g, err = guestfs.Create()
@@ -52,18 +55,26 @@ func newGuestFs(diskPath, partDev string) (g *guestfs.Guestfs, close func() erro
 	}, nil
 }
 
-func setup(t *testing.T) (*aferoguestfs.Fs, func()) {
+func setup() (*aferoguestfs.Fs, func(), error) {
 	f, err := os.CreateTemp("", "afero-guestfs-test*.img")
-	assert.Nil(t, err)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
 
 	_, err = io.Copy(f, bytes.NewBuffer(test1Img))
-	assert.Nil(t, err)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to write to temp file: %w", err)
+	}
 
 	err = f.Close()
-	assert.Nil(t, err)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to close temp file: %w", err)
+	}
 
 	gfs, gfsClose, err := newGuestFs(f.Name(), "/dev/sda2")
-	assert.Nil(t, err)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create guestfs: %w", err)
+	}
 	return aferoguestfs.New(gfs), func() {
 		if err := gfsClose(); err != nil {
 			fmt.Fprintf(os.Stderr, "warning: failed to close guestfs: %+v", err)
@@ -71,12 +82,26 @@ func setup(t *testing.T) (*aferoguestfs.Fs, func()) {
 		if err := os.Remove(f.Name()); err != nil {
 			fmt.Fprintf(os.Stderr, "warning: failed to remove %s: %+v", f.Name(), err)
 		}
+	}, nil
+}
+
+func TestMain(m *testing.M) {
+	fs, gfsClose, err := setup()
+	if err != nil {
+		panic(err)
 	}
+
+	gfs = fs
+
+	code := m.Run()
+
+	gfsClose()
+
+	os.Exit(code)
 }
 
 func TestChmod(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -96,8 +121,7 @@ func TestChmod(t *testing.T) {
 }
 
 func TestChown(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -121,8 +145,7 @@ func TestChown(t *testing.T) {
 }
 
 func TestChtimes(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -139,8 +162,7 @@ func TestChtimes(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test.txt")
 	assert.Nil(t, err)
@@ -152,8 +174,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestMkdir(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
 	assert.Nil(t, err)
@@ -164,8 +185,7 @@ func TestMkdir(t *testing.T) {
 }
 
 func TestMkdirAll(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := gfs.MkdirAll("/home/user", os.ModePerm)
 	assert.Nil(t, err)
@@ -176,8 +196,7 @@ func TestMkdirAll(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -191,8 +210,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestRemoveAll(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
 	assert.Nil(t, err)
@@ -212,8 +230,7 @@ func TestRemoveAll(t *testing.T) {
 }
 
 func TestRename(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -231,8 +248,7 @@ func TestRename(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -247,8 +263,7 @@ func TestOpen(t *testing.T) {
 }
 
 func TestOpenFile(t *testing.T) {
-	gfs, setupClose := setup(t)
-	defer setupClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -260,4 +275,57 @@ func TestOpenFile(t *testing.T) {
 	bts, err := afero.ReadAll(f)
 	assert.Nil(t, err)
 	assert.Equal(t, []byte("some text"), bts)
+}
+
+func TestLstatIfPossible(t *testing.T) {
+	defer clear(t, gfs)
+
+	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	assert.Nil(t, err)
+
+	err = gfs.SymlinkIfPossible("/test1.txt", "/test2.txt")
+	assert.Nil(t, err)
+
+	fi, ok, err := gfs.LstatIfPossible("/test2.txt")
+	assert.Nil(t, err)
+	assert.True(t, ok)
+
+	assert.True(t, fi.Mode()&os.ModeSymlink != 0)
+}
+
+func TestReadlinkIfPossible(t *testing.T) {
+	defer clear(t, gfs)
+
+	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	assert.Nil(t, err)
+
+	err = gfs.SymlinkIfPossible("/test1.txt", "/test2.txt")
+	assert.Nil(t, err)
+
+	target, err := gfs.ReadlinkIfPossible("/test2.txt")
+	assert.Nil(t, err)
+	assert.Equal(t, "/test1.txt", target)
+}
+
+func TestSymlinkIfPossible(t *testing.T) {
+	defer clear(t, gfs)
+
+	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	assert.Nil(t, err)
+
+	err = gfs.SymlinkIfPossible("/test1.txt", "/test2.txt")
+	assert.Nil(t, err)
+}
+
+func clear(t *testing.T, gfs *aferoguestfs.Fs) {
+	root, err := gfs.Open("/")
+	assert.Nil(t, err)
+
+	dirnames, err := root.Readdirnames(-1)
+	assert.Nil(t, err)
+
+	for _, dirname := range dirnames {
+		err = gfs.RemoveAll(filepath.Join("/", dirname))
+		assert.Nil(t, err)
+	}
 }

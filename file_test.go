@@ -11,8 +11,7 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -30,8 +29,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestReadAt(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -49,8 +47,7 @@ func TestReadAt(t *testing.T) {
 }
 
 func TestReaddirnames(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
 	assert.Nil(t, err)
@@ -72,8 +69,7 @@ func TestReaddirnames(t *testing.T) {
 }
 
 func TestReaddir(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
 	assert.Nil(t, err)
@@ -108,8 +104,7 @@ func TestReaddir(t *testing.T) {
 }
 
 func TestSeek(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some more text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -131,8 +126,7 @@ func TestSeek(t *testing.T) {
 }
 
 func TestStat(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some more text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -151,8 +145,7 @@ func TestStat(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
 	assert.Nil(t, err)
@@ -171,8 +164,7 @@ func TestWrite(t *testing.T) {
 }
 
 func TestWriteAt(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
 	assert.Nil(t, err)
@@ -191,8 +183,7 @@ func TestWriteAt(t *testing.T) {
 }
 
 func TestWriteString(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
 	assert.Nil(t, err)
@@ -211,8 +202,7 @@ func TestWriteString(t *testing.T) {
 }
 
 func TestTruncate(t *testing.T) {
-	gfs, gfsClose := setup(t)
-	defer gfsClose()
+	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
 	assert.Nil(t, err)

@@ -84,17 +84,8 @@ func (fs *Fs) Rename(oldname string, newname string) error {
 func (fs *Fs) Stat(name string) (os.FileInfo, error) {
 	// calling Exists before Statns prevents a "No such file or directory"
 	// error from being printed by libguestfs
-	exists, err := fs.guestfs.Exists(name)
-	if err != nil {
-		return nil, wrapErr(err, name)
-	}
-
-	if !exists {
-		return nil, &os.PathError{
-			Op:   "exists",
-			Path: name,
-			Err:  syscall.ENOENT,
-		}
+	if err := fs.exists(name); err != nil {
+		return nil, err
 	}
 
 	s, err := fs.guestfs.Statns(name)
@@ -103,4 +94,64 @@ func (fs *Fs) Stat(name string) (os.FileInfo, error) {
 	}
 
 	return newFileInfo(name, s), nil
+}
+
+// Lstat is the analogue of os.Lstat.
+func (fs *Fs) Lstat(name string) (os.FileInfo, error) {
+	// calling Exists before Lstatns prevents a "No such file or directory"
+	// error from being printed by libguestfs
+	if err := fs.exists(name); err != nil {
+		return nil, err
+	}
+
+	s, err := fs.guestfs.Lstatns(name)
+	if err != nil {
+		return nil, wrapErr(err, name)
+	}
+
+	return newFileInfo(name, s), nil
+}
+
+// LstatIfPossible implements afero.Symlinker.
+func (fs *Fs) LstatIfPossible(name string) (os.FileInfo, bool, error) {
+	fi, err := fs.Lstat(name)
+	return fi, true, err
+}
+
+// Readlink is the analogue of os.Readlink.
+func (fs *Fs) Readlink(name string) (string, error) {
+	target, err := fs.guestfs.Readlink(name)
+	return target, wrapErr(err, name)
+}
+
+// ReadlinkIfPossible implements afero.Symlinker.
+func (fs *Fs) ReadlinkIfPossible(name string) (string, error) {
+	return fs.Readlink(name)
+}
+
+// Symlink is the analogue of os.Symlink.
+func (fs *Fs) Symlink(oldname string, newname string) error {
+	return wrapErr(fs.guestfs.Ln_sf(oldname, newname), oldname)
+}
+
+// SymlinkIfPossible implements afero.Symlinker.
+func (fs *Fs) SymlinkIfPossible(oldname string, newname string) error {
+	return fs.Symlink(oldname, newname)
+}
+
+func (fs *Fs) exists(name string) error {
+	exists, err := fs.guestfs.Exists(name)
+	if err != nil {
+		return wrapErr(err, name)
+	}
+
+	if !exists {
+		return &os.PathError{
+			Op:   "exists",
+			Path: name,
+			Err:  syscall.ENOENT,
+		}
+	}
+
+	return nil
 }
