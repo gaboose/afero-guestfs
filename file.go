@@ -15,9 +15,10 @@ type file struct {
 
 	stat os.FileInfo
 
-	buf      []byte
-	pos      int64
-	modified bool
+	buf        []byte
+	pos        int64
+	modified   bool
+	fileExists bool
 }
 
 func newFile(fs *Fs, name string, flag int, perm os.FileMode) (*file, error) {
@@ -31,18 +32,19 @@ func newFile(fs *Fs, name string, flag int, perm os.FileMode) (*file, error) {
 	fileMustNotExist := flag&os.O_CREATE != 0 && flag&os.O_EXCL != 0
 	fileMustExist := flag&os.O_CREATE == 0
 
-	fileExists, err := fs.guestfs.Exists(name)
+	var err error
+	ret.fileExists, err = fs.guestfs.Exists(name)
 	if err != nil {
 		return nil, wrapErr(err, name)
 	}
 
-	if fileMustExist && !fileExists {
+	if fileMustExist && !ret.fileExists {
 		return nil, os.ErrNotExist
-	} else if fileMustNotExist && fileExists {
+	} else if fileMustNotExist && ret.fileExists {
 		return nil, os.ErrExist
 	}
 
-	if !fileExists {
+	if !ret.fileExists {
 		if flag&os.O_CREATE != 0 {
 			// trigger file creation on close even if nothing is written
 			ret.modified = true
@@ -89,6 +91,11 @@ func (f *file) Close() error {
 	if f.modified {
 		if err := f.fs.guestfs.Write(f.name, f.buf); err != nil {
 			return wrapErr(err, f.name)
+		}
+		if !f.fileExists {
+			if err := f.fs.guestfs.Chmod(int(f.perm), f.name); err != nil {
+				return wrapErr(err, f.name)
+			}
 		}
 	}
 	return nil

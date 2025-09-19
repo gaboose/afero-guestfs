@@ -94,12 +94,12 @@ func TestReaddir(t *testing.T) {
 
 	assert.Equal(t, "test1.txt", fileInfos[0].Name())
 	assert.Equal(t, false, fileInfos[0].IsDir())
-	assert.Equal(t, os.FileMode(0644), fileInfos[0].Mode())
+	assert.Equal(t, os.FileMode(0777), fileInfos[0].Mode())
 	assert.Equal(t, int64(9), fileInfos[0].Size())
 
 	assert.Equal(t, "test2.txt", fileInfos[1].Name())
 	assert.Equal(t, false, fileInfos[1].IsDir())
-	assert.Equal(t, os.FileMode(0644), fileInfos[1].Mode())
+	assert.Equal(t, os.FileMode(0777), fileInfos[1].Mode())
 	assert.Equal(t, int64(14), fileInfos[1].Size())
 }
 
@@ -139,7 +139,7 @@ func TestStat(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, false, stat.IsDir())
-	assert.Equal(t, os.FileMode(0644), stat.Mode())
+	assert.Equal(t, os.FileMode(0777), stat.Mode())
 	assert.Equal(t, "test1.txt", stat.Name())
 	assert.Equal(t, int64(14), stat.Size())
 }

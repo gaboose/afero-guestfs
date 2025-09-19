@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -101,9 +102,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestChmod(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), 0644)
 	assert.Nil(t, err)
 
 	stat, err := gfs.Stat("/test.txt")
@@ -121,7 +122,7 @@ func TestChmod(t *testing.T) {
 }
 
 func TestChown(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -145,7 +146,7 @@ func TestChown(t *testing.T) {
 }
 
 func TestChtimes(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -162,7 +163,7 @@ func TestChtimes(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	f, err := gfs.Create("/test.txt")
 	assert.Nil(t, err)
@@ -174,7 +175,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestMkdir(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
 	assert.Nil(t, err)
@@ -185,7 +186,7 @@ func TestMkdir(t *testing.T) {
 }
 
 func TestMkdirAll(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := gfs.MkdirAll("/home/user", os.ModePerm)
 	assert.Nil(t, err)
@@ -196,7 +197,7 @@ func TestMkdirAll(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -210,7 +211,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestRemoveAll(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
 	assert.Nil(t, err)
@@ -230,7 +231,7 @@ func TestRemoveAll(t *testing.T) {
 }
 
 func TestRename(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -248,7 +249,7 @@ func TestRename(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -263,22 +264,37 @@ func TestOpen(t *testing.T) {
 }
 
 func TestOpenFile(t *testing.T) {
-	defer clear(t, gfs)
+	t.Run("CanRead", func(t *testing.T) {
+		clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+		err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+		assert.Nil(t, err)
 
-	f, err := gfs.OpenFile("/test1.txt", 0, os.ModePerm)
-	assert.Nil(t, err)
-	defer f.Close()
+		f, err := gfs.OpenFile("/test1.txt", 0, os.ModePerm)
+		assert.Nil(t, err)
+		defer f.Close()
 
-	bts, err := afero.ReadAll(f)
-	assert.Nil(t, err)
-	assert.Equal(t, []byte("some text"), bts)
+		bts, err := afero.ReadAll(f)
+		assert.Nil(t, err)
+		assert.Equal(t, []byte("some text"), bts)
+	})
+
+	t.Run("SetsPerm", func(t *testing.T) {
+		clear(t, gfs)
+
+		f, err := gfs.OpenFile("/test1.txt", os.O_CREATE|os.O_TRUNC, os.ModePerm)
+		assert.Nil(t, err)
+		f.Close()
+
+		fi, err := gfs.Lstat("/test1.txt")
+		assert.Nil(t, err)
+
+		assert.Equal(t, fi.Mode().Perm(), fs.ModePerm)
+	})
 }
 
 func TestLstatIfPossible(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -294,7 +310,7 @@ func TestLstatIfPossible(t *testing.T) {
 }
 
 func TestReadlinkIfPossible(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
@@ -308,7 +324,7 @@ func TestReadlinkIfPossible(t *testing.T) {
 }
 
 func TestSymlinkIfPossible(t *testing.T) {
-	defer clear(t, gfs)
+	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
