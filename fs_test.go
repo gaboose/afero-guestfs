@@ -331,6 +331,28 @@ func TestSymlinkIfPossible(t *testing.T) {
 
 	err = gfs.SymlinkIfPossible("/test1.txt", "/test2.txt")
 	assert.Nil(t, err)
+
+	target, err := gfs.Readlink("/test2.txt")
+	assert.Nil(t, err)
+	assert.Equal(t, "/test1.txt", target)
+}
+
+func TestLink(t *testing.T) {
+	clear(t, gfs)
+
+	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	assert.Nil(t, err)
+
+	err = gfs.Link("/test1.txt", "/test2.txt")
+	assert.Nil(t, err)
+
+	fi1, err := gfs.Stat("/test1.txt")
+	assert.Nil(t, err)
+
+	fi2, err := gfs.Stat("/test2.txt")
+	assert.Nil(t, err)
+
+	assert.Equal(t, fi1.Sys().(*guestfs.StatNS).St_ino, fi2.Sys().(*guestfs.StatNS).St_ino)
 }
 
 func clear(t *testing.T, gfs *aferoguestfs.Fs) {

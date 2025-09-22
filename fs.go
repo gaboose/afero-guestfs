@@ -129,14 +129,19 @@ func (fs *Fs) ReadlinkIfPossible(name string) (string, error) {
 	return fs.Readlink(name)
 }
 
-// Symlink is the analogue of os.Symlink.
+// Symlink is analogous to os.Symlink.
 func (fs *Fs) Symlink(oldname string, newname string) error {
-	return wrapErr(fs.guestfs.Ln_sf(oldname, newname), oldname)
+	return wrapErr(fs.guestfs.Ln_s(oldname, newname), newname)
 }
 
 // SymlinkIfPossible implements afero.Symlinker.
 func (fs *Fs) SymlinkIfPossible(oldname string, newname string) error {
 	return fs.Symlink(oldname, newname)
+}
+
+// Link is analogous to os.Link.
+func (fs *Fs) Link(oldname string, newname string) error {
+	return wrapErr(fs.guestfs.Ln(oldname, newname), newname)
 }
 
 func (fs *Fs) exists(name string) error {
