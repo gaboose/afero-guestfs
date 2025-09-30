@@ -2,6 +2,7 @@ package aferoguestfs
 
 import (
 	"os"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -21,16 +22,19 @@ func New(g *guestfs.Guestfs) *Fs {
 
 // Chmod implements afero.Fs.
 func (fs *Fs) Chmod(name string, mode os.FileMode) error {
+	name = normalizePath(name)
 	return wrapErr(fs.guestfs.Chmod(int(mode), name), name)
 }
 
 // Chown implements afero.Fs.
 func (fs *Fs) Chown(name string, uid int, gid int) error {
+	name = normalizePath(name)
 	return wrapErr(fs.guestfs.Chown(uid, gid, name), name)
 }
 
 // Chtimes implements afero.Fs.
 func (fs *Fs) Chtimes(name string, atime time.Time, mtime time.Time) error {
+	name = normalizePath(name)
 	return wrapErr(fs.guestfs.Utimens(name, atime.Unix(), int64(atime.Nanosecond()), mtime.Unix(), int64(mtime.Nanosecond())), name)
 }
 
@@ -41,11 +45,13 @@ func (fs *Fs) Create(name string) (afero.File, error) {
 
 // Mkdir implements afero.Fs.
 func (fs *Fs) Mkdir(name string, perm os.FileMode) error {
+	name = normalizePath(name)
 	return wrapErr(fs.guestfs.Mkdir_mode(name, int(perm)), name)
 }
 
 // MkdirAll implements afero.Fs.
 func (fs *Fs) MkdirAll(path string, perm os.FileMode) error {
+	path = normalizePath(path)
 	return wrapErr(fs.guestfs.Mkdir_p(path), path)
 }
 
@@ -61,27 +67,34 @@ func (fs *Fs) Open(name string) (afero.File, error) {
 
 // OpenFile implements afero.Fs.
 func (fs *Fs) OpenFile(name string, flag int, perm os.FileMode) (afero.File, error) {
+	name = normalizePath(name)
 	f, err := newFile(fs, name, flag, perm)
 	return f, wrapErr(err, name)
 }
 
 // Remove implements afero.Fs.
 func (fs *Fs) Remove(name string) error {
+	name = normalizePath(name)
 	return wrapErr(fs.guestfs.Rm(name), name)
 }
 
 // RemoveAll implements afero.Fs.
 func (fs *Fs) RemoveAll(path string) error {
+	path = normalizePath(path)
 	return wrapErr(fs.guestfs.Rm_rf(path), path)
 }
 
 // Rename implements afero.Fs.
 func (fs *Fs) Rename(oldname string, newname string) error {
+	oldname = normalizePath(oldname)
+	newname = normalizePath(newname)
 	return wrapErr(fs.guestfs.Rename(oldname, newname), oldname)
 }
 
 // Stat implements afero.Fs.
 func (fs *Fs) Stat(name string) (os.FileInfo, error) {
+	name = normalizePath(name)
+
 	// calling Exists before Statns prevents a "No such file or directory"
 	// error from being printed by libguestfs
 	if err := fs.exists(name); err != nil {
@@ -98,6 +111,8 @@ func (fs *Fs) Stat(name string) (os.FileInfo, error) {
 
 // Lstat is the analogue of os.Lstat.
 func (fs *Fs) Lstat(name string) (os.FileInfo, error) {
+	name = normalizePath(name)
+
 	// calling Exists before Lstatns prevents a "No such file or directory"
 	// error from being printed by libguestfs
 	if err := fs.exists(name); err != nil {
@@ -120,6 +135,7 @@ func (fs *Fs) LstatIfPossible(name string) (os.FileInfo, bool, error) {
 
 // Readlink is the analogue of os.Readlink.
 func (fs *Fs) Readlink(name string) (string, error) {
+	name = normalizePath(name)
 	target, err := fs.guestfs.Readlink(name)
 	return target, wrapErr(err, name)
 }
@@ -131,6 +147,7 @@ func (fs *Fs) ReadlinkIfPossible(name string) (string, error) {
 
 // Symlink is analogous to os.Symlink.
 func (fs *Fs) Symlink(oldname string, newname string) error {
+	newname = normalizePath(newname)
 	return wrapErr(fs.guestfs.Ln_s(oldname, newname), newname)
 }
 
@@ -141,6 +158,8 @@ func (fs *Fs) SymlinkIfPossible(oldname string, newname string) error {
 
 // Link is analogous to os.Link.
 func (fs *Fs) Link(oldname string, newname string) error {
+	oldname = normalizePath(oldname)
+	newname = normalizePath(newname)
 	return wrapErr(fs.guestfs.Ln(oldname, newname), newname)
 }
 
@@ -159,4 +178,12 @@ func (fs *Fs) exists(name string) error {
 	}
 
 	return nil
+}
+
+func normalizePath(path string) string {
+	path = filepath.Clean(path)
+	if path[0] != filepath.Separator {
+		path = string(append([]rune{filepath.Separator}, []rune(path)...))
+	}
+	return path
 }

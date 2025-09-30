@@ -104,18 +104,18 @@ func TestMain(m *testing.M) {
 func TestChmod(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), 0644)
+	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), 0644)
 	assert.Nil(t, err)
 
-	stat, err := gfs.Stat("/test.txt")
+	stat, err := gfs.Stat("test.txt")
 	assert.Nil(t, err)
 
 	assert.Equal(t, stat.Mode(), os.FileMode(0644))
 
-	err = gfs.Chmod("/test.txt", os.FileMode(0777))
+	err = gfs.Chmod("test.txt", os.FileMode(0777))
 	assert.Nil(t, err)
 
-	stat, err = gfs.Stat("/test.txt")
+	stat, err = gfs.Stat("test.txt")
 	assert.Nil(t, err)
 
 	assert.Equal(t, stat.Mode(), os.FileMode(0777))
@@ -124,20 +124,20 @@ func TestChmod(t *testing.T) {
 func TestChown(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	stat, err := gfs.Stat("/test.txt")
+	stat, err := gfs.Stat("test.txt")
 	assert.Nil(t, err)
 	statns := stat.Sys().(*guestfs.StatNS)
 
 	assert.Equal(t, statns.St_uid, int64(0))
 	assert.Equal(t, statns.St_gid, int64(0))
 
-	err = gfs.Chown("/test.txt", 1000, 1000)
+	err = gfs.Chown("test.txt", 1000, 1000)
 	assert.Nil(t, err)
 
-	stat, err = gfs.Stat("/test.txt")
+	stat, err = gfs.Stat("test.txt")
 	assert.Nil(t, err)
 	statns = stat.Sys().(*guestfs.StatNS)
 
@@ -148,15 +148,15 @@ func TestChown(t *testing.T) {
 func TestChtimes(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
 	expected := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	err = gfs.Chtimes("/test.txt", expected, expected)
+	err = gfs.Chtimes("test.txt", expected, expected)
 	assert.Nil(t, err)
 
-	stat, err := gfs.Stat("/test.txt")
+	stat, err := gfs.Stat("test.txt")
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, stat.ModTime().UTC())
@@ -165,11 +165,11 @@ func TestChtimes(t *testing.T) {
 func TestCreate(t *testing.T) {
 	clear(t, gfs)
 
-	f, err := gfs.Create("/test.txt")
+	f, err := gfs.Create("test.txt")
 	assert.Nil(t, err)
 	f.Close()
 
-	exists, err := afero.Exists(gfs, "/test.txt")
+	exists, err := afero.Exists(gfs, "test.txt")
 	assert.True(t, exists)
 	assert.Nil(t, err)
 }
@@ -177,10 +177,10 @@ func TestCreate(t *testing.T) {
 func TestMkdir(t *testing.T) {
 	clear(t, gfs)
 
-	err := gfs.Mkdir("/etc", os.ModePerm)
+	err := gfs.Mkdir("etc", os.ModePerm)
 	assert.Nil(t, err)
 
-	exists, err := afero.DirExists(gfs, "/etc")
+	exists, err := afero.DirExists(gfs, "etc")
 	assert.True(t, exists)
 	assert.Nil(t, err)
 }
@@ -188,10 +188,10 @@ func TestMkdir(t *testing.T) {
 func TestMkdirAll(t *testing.T) {
 	clear(t, gfs)
 
-	err := gfs.MkdirAll("/home/user", os.ModePerm)
+	err := gfs.MkdirAll("home/user", os.ModePerm)
 	assert.Nil(t, err)
 
-	exists, err := afero.DirExists(gfs, "/home/user")
+	exists, err := afero.DirExists(gfs, "home/user")
 	assert.True(t, exists)
 	assert.Nil(t, err)
 }
@@ -199,13 +199,13 @@ func TestMkdirAll(t *testing.T) {
 func TestRemove(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = gfs.Remove("/test1.txt")
+	err = gfs.Remove("test1.txt")
 	assert.Nil(t, err)
 
-	exists, err := afero.Exists(gfs, "/test1.txt")
+	exists, err := afero.Exists(gfs, "test1.txt")
 	assert.False(t, exists)
 	assert.Nil(t, err)
 }
@@ -213,19 +213,19 @@ func TestRemove(t *testing.T) {
 func TestRemoveAll(t *testing.T) {
 	clear(t, gfs)
 
-	err := gfs.Mkdir("/etc", os.ModePerm)
+	err := gfs.Mkdir("etc", os.ModePerm)
 	assert.Nil(t, err)
 
-	err = afero.WriteFile(gfs, "/etc/test1.txt", []byte("some text"), os.ModePerm)
+	err = afero.WriteFile(gfs, "etc/test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = afero.WriteFile(gfs, "/etc/test2.txt", []byte("some more text"), os.ModePerm)
+	err = afero.WriteFile(gfs, "etc/test2.txt", []byte("some more text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = gfs.RemoveAll("/etc")
+	err = gfs.RemoveAll("etc")
 	assert.Nil(t, err)
 
-	exists, err := afero.DirExists(gfs, "/etc")
+	exists, err := afero.DirExists(gfs, "etc")
 	assert.False(t, exists)
 	assert.Nil(t, err)
 }
@@ -233,17 +233,17 @@ func TestRemoveAll(t *testing.T) {
 func TestRename(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = gfs.Rename("/test1.txt", "/test2.txt")
+	err = gfs.Rename("test1.txt", "test2.txt")
 	assert.Nil(t, err)
 
-	exists, err := afero.Exists(gfs, "/test1.txt")
+	exists, err := afero.Exists(gfs, "test1.txt")
 	assert.False(t, exists)
 	assert.Nil(t, err)
 
-	bts, err := afero.ReadFile(gfs, "/test2.txt")
+	bts, err := afero.ReadFile(gfs, "test2.txt")
 	assert.Nil(t, err)
 	assert.Equal(t, []byte("some text"), bts)
 }
@@ -251,10 +251,10 @@ func TestRename(t *testing.T) {
 func TestOpen(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	f, err := gfs.Open("/test1.txt")
+	f, err := gfs.Open("test1.txt")
 	assert.Nil(t, err)
 	defer f.Close()
 
@@ -267,10 +267,10 @@ func TestOpenFile(t *testing.T) {
 	t.Run("CanRead", func(t *testing.T) {
 		clear(t, gfs)
 
-		err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+		err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 		assert.Nil(t, err)
 
-		f, err := gfs.OpenFile("/test1.txt", 0, os.ModePerm)
+		f, err := gfs.OpenFile("test1.txt", 0, os.ModePerm)
 		assert.Nil(t, err)
 		defer f.Close()
 
@@ -282,11 +282,11 @@ func TestOpenFile(t *testing.T) {
 	t.Run("SetsPerm", func(t *testing.T) {
 		clear(t, gfs)
 
-		f, err := gfs.OpenFile("/test1.txt", os.O_CREATE|os.O_TRUNC, os.ModePerm)
+		f, err := gfs.OpenFile("test1.txt", os.O_CREATE|os.O_TRUNC, os.ModePerm)
 		assert.Nil(t, err)
 		f.Close()
 
-		fi, err := gfs.Lstat("/test1.txt")
+		fi, err := gfs.Lstat("test1.txt")
 		assert.Nil(t, err)
 
 		assert.Equal(t, fi.Mode().Perm(), fs.ModePerm)
@@ -296,13 +296,13 @@ func TestOpenFile(t *testing.T) {
 func TestLstatIfPossible(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = gfs.SymlinkIfPossible("/test1.txt", "/test2.txt")
+	err = gfs.SymlinkIfPossible("test1.txt", "test2.txt")
 	assert.Nil(t, err)
 
-	fi, ok, err := gfs.LstatIfPossible("/test2.txt")
+	fi, ok, err := gfs.LstatIfPossible("test2.txt")
 	assert.Nil(t, err)
 	assert.True(t, ok)
 
@@ -312,27 +312,34 @@ func TestLstatIfPossible(t *testing.T) {
 func TestReadlinkIfPossible(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = gfs.SymlinkIfPossible("/test1.txt", "/test2.txt")
+	err = gfs.SymlinkIfPossible("test1.txt", "test2.txt")
 	assert.Nil(t, err)
 
-	target, err := gfs.ReadlinkIfPossible("/test2.txt")
+	target, err := gfs.ReadlinkIfPossible("test2.txt")
 	assert.Nil(t, err)
-	assert.Equal(t, "/test1.txt", target)
+	assert.Equal(t, "test1.txt", target)
 }
 
 func TestSymlinkIfPossible(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = gfs.SymlinkIfPossible("/test1.txt", "/test2.txt")
+	err = gfs.SymlinkIfPossible("test1.txt", "test2.txt")
 	assert.Nil(t, err)
 
-	target, err := gfs.Readlink("/test2.txt")
+	err = gfs.SymlinkIfPossible("/test1.txt", "test3.txt")
+	assert.Nil(t, err)
+
+	target, err := gfs.Readlink("test2.txt")
+	assert.Nil(t, err)
+	assert.Equal(t, "test1.txt", target)
+
+	target, err = gfs.Readlink("test3.txt")
 	assert.Nil(t, err)
 	assert.Equal(t, "/test1.txt", target)
 }
@@ -340,16 +347,16 @@ func TestSymlinkIfPossible(t *testing.T) {
 func TestLink(t *testing.T) {
 	clear(t, gfs)
 
-	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
 	assert.Nil(t, err)
 
-	err = gfs.Link("/test1.txt", "/test2.txt")
+	err = gfs.Link("test1.txt", "test2.txt")
 	assert.Nil(t, err)
 
-	fi1, err := gfs.Stat("/test1.txt")
+	fi1, err := gfs.Stat("test1.txt")
 	assert.Nil(t, err)
 
-	fi2, err := gfs.Stat("/test2.txt")
+	fi2, err := gfs.Stat("test2.txt")
 	assert.Nil(t, err)
 
 	assert.Equal(t, fi1.Sys().(*guestfs.StatNS).St_ino, fi2.Sys().(*guestfs.StatNS).St_ino)
