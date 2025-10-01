@@ -80,16 +80,16 @@ func (f *fileInfo) Sys() any {
 }
 
 // UID implements aferosync.FileInfoOwner
-func (f *fileInfo) Uid() int64 {
-	return f.stat.St_uid
+func (f *fileInfo) Uid() int {
+	return int(f.stat.St_uid)
 }
 
 // GID implements aferosync.FileInfoOwner
-func (f *fileInfo) Gid() int64 {
-	return f.stat.St_gid
+func (f *fileInfo) Gid() int {
+	return int(f.stat.St_gid)
 }
 
 // Ino implements aferosync.FileInfoInoer.
-func (f *fileInfo) Ino() int64 {
-	return f.stat.St_ino
+func (f *fileInfo) Ino() int {
+	return int(f.stat.St_ino)
 }
