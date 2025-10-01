@@ -8,16 +8,17 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRead(t *testing.T) {
 	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f, err := gfs.Open("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer f.Close()
 
 	var bts [4]byte
@@ -32,10 +33,10 @@ func TestReadAt(t *testing.T) {
 	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f, err := gfs.Open("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer f.Close()
 
 	var bts [4]byte
@@ -50,16 +51,16 @@ func TestReaddirnames(t *testing.T) {
 	defer clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = afero.WriteFile(gfs, "/etc/test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = afero.WriteFile(gfs, "/etc/test2.txt", []byte("some more text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f, err := gfs.Open("/etc")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer f.Close()
 
 	dirnames, err := f.Readdirnames(-1)
@@ -72,16 +73,16 @@ func TestReaddir(t *testing.T) {
 	defer clear(t, gfs)
 
 	err := gfs.Mkdir("/etc", os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = afero.WriteFile(gfs, "/etc/test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = afero.WriteFile(gfs, "/etc/test2.txt", []byte("some more text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f, err := gfs.Open("/etc")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer f.Close()
 
 	fileInfos, err := f.Readdir(-1)
@@ -107,10 +108,10 @@ func TestSeek(t *testing.T) {
 	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some more text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f, err := gfs.Open("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer f.Close()
 
 	nseek, err := f.Seek(5, io.SeekStart)
@@ -119,9 +120,9 @@ func TestSeek(t *testing.T) {
 
 	var bts [4]byte
 	n, err := f.Read(bts[:])
-	assert.Nil(t, err)
-	assert.Equal(t, 4, n)
+	require.Nil(t, err)
 
+	assert.Equal(t, 4, n)
 	assert.Equal(t, []byte("more"), bts[:])
 }
 
@@ -129,10 +130,10 @@ func TestStat(t *testing.T) {
 	defer clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "/test1.txt", []byte("some more text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f, err := gfs.Open("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer f.Close()
 
 	stat, err := f.Stat()
@@ -148,17 +149,17 @@ func TestWrite(t *testing.T) {
 	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	n, err := f.Write([]byte("some text"))
 	assert.Nil(t, err)
 	assert.Equal(t, 9, n)
 
 	err = f.Close()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	bts, err := afero.ReadFile(gfs, "/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	assert.Equal(t, []byte("some text"), bts)
 }
@@ -167,17 +168,17 @@ func TestWriteAt(t *testing.T) {
 	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	n, err := f.WriteAt([]byte("some text"), 4)
 	assert.Nil(t, err)
 	assert.Equal(t, 9, n)
 
 	err = f.Close()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	bts, err := afero.ReadFile(gfs, "/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	assert.Equal(t, append([]byte{0, 0, 0, 0}, []byte("some text")...), bts)
 }
@@ -186,17 +187,17 @@ func TestWriteString(t *testing.T) {
 	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	n, err := f.WriteString("some text")
 	assert.Nil(t, err)
 	assert.Equal(t, 9, n)
 
 	err = f.Close()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	bts, err := afero.ReadFile(gfs, "/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	assert.Equal(t, []byte("some text"), bts)
 }
@@ -205,16 +206,16 @@ func TestTruncate(t *testing.T) {
 	defer clear(t, gfs)
 
 	f, err := gfs.Create("/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = f.Truncate(4)
 	assert.Nil(t, err)
 
 	err = f.Close()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	bts, err := afero.ReadFile(gfs, "/test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	assert.Equal(t, []byte{0, 0, 0, 0}, bts)
 }

@@ -107,18 +107,18 @@ func TestChmod(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), 0644)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	stat, err := gfs.Stat("test.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
-	assert.Equal(t, stat.Mode(), os.FileMode(0644))
+	require.Equal(t, stat.Mode(), os.FileMode(0644))
 
 	err = gfs.Chmod("test.txt", os.FileMode(0777))
 	assert.Nil(t, err)
 
 	stat, err = gfs.Stat("test.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	assert.Equal(t, stat.Mode(), os.FileMode(0777))
 }
@@ -127,20 +127,20 @@ func TestChown(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	stat, err := gfs.Stat("test.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	statns := stat.Sys().(*guestfs.StatNS)
 
-	assert.Equal(t, statns.St_uid, int64(0))
-	assert.Equal(t, statns.St_gid, int64(0))
+	require.Equal(t, statns.St_uid, int64(0))
+	require.Equal(t, statns.St_gid, int64(0))
 
 	err = gfs.Chown("test.txt", 1000, 1000)
 	assert.Nil(t, err)
 
 	stat, err = gfs.Stat("test.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	statns = stat.Sys().(*guestfs.StatNS)
 
 	assert.Equal(t, statns.St_uid, int64(1000))
@@ -151,7 +151,7 @@ func TestChtimes(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	expected := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -159,7 +159,7 @@ func TestChtimes(t *testing.T) {
 	assert.Nil(t, err)
 
 	stat, err := gfs.Stat("test.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	assert.Equal(t, expected, stat.ModTime().UTC())
 }
@@ -169,11 +169,11 @@ func TestCreate(t *testing.T) {
 
 	f, err := gfs.Create("test.txt")
 	assert.Nil(t, err)
-	f.Close()
+	require.Nil(t, f.Close())
 
 	exists, err := afero.Exists(gfs, "test.txt")
+	require.Nil(t, err)
 	assert.True(t, exists)
-	assert.Nil(t, err)
 }
 
 func TestMkdir(t *testing.T) {
@@ -183,8 +183,8 @@ func TestMkdir(t *testing.T) {
 	assert.Nil(t, err)
 
 	exists, err := afero.DirExists(gfs, "etc")
+	require.Nil(t, err)
 	assert.True(t, exists)
-	assert.Nil(t, err)
 }
 
 func TestMkdirAll(t *testing.T) {
@@ -194,59 +194,59 @@ func TestMkdirAll(t *testing.T) {
 	assert.Nil(t, err)
 
 	exists, err := afero.DirExists(gfs, "home/user")
+	require.Nil(t, err)
 	assert.True(t, exists)
-	assert.Nil(t, err)
 }
 
 func TestRemove(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.Remove("test1.txt")
 	assert.Nil(t, err)
 
 	exists, err := afero.Exists(gfs, "test1.txt")
+	require.Nil(t, err)
 	assert.False(t, exists)
-	assert.Nil(t, err)
 }
 
 func TestRemoveAll(t *testing.T) {
 	clear(t, gfs)
 
 	err := gfs.Mkdir("etc", os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = afero.WriteFile(gfs, "etc/test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = afero.WriteFile(gfs, "etc/test2.txt", []byte("some more text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.RemoveAll("etc")
 	assert.Nil(t, err)
 
 	exists, err := afero.DirExists(gfs, "etc")
+	require.Nil(t, err)
 	assert.False(t, exists)
-	assert.Nil(t, err)
 }
 
 func TestRename(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.Rename("test1.txt", "test2.txt")
 	assert.Nil(t, err)
 
 	exists, err := afero.Exists(gfs, "test1.txt")
+	require.Nil(t, err)
 	assert.False(t, exists)
-	assert.Nil(t, err)
 
 	bts, err := afero.ReadFile(gfs, "test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, []byte("some text"), bts)
 }
 
@@ -254,14 +254,14 @@ func TestOpen(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f, err := gfs.Open("test1.txt")
 	assert.Nil(t, err)
 	defer f.Close()
 
 	bts, err := afero.ReadAll(f)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, []byte("some text"), bts)
 }
 
@@ -270,14 +270,14 @@ func TestOpenFile(t *testing.T) {
 		clear(t, gfs)
 
 		err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-		assert.Nil(t, err)
+		require.Nil(t, err)
 
 		f, err := gfs.OpenFile("test1.txt", 0, os.ModePerm)
 		assert.Nil(t, err)
 		defer f.Close()
 
 		bts, err := afero.ReadAll(f)
-		assert.Nil(t, err)
+		require.Nil(t, err)
 		assert.Equal(t, []byte("some text"), bts)
 	})
 
@@ -289,8 +289,7 @@ func TestOpenFile(t *testing.T) {
 		f.Close()
 
 		fi, err := gfs.Lstat("test1.txt")
-		assert.Nil(t, err)
-
+		require.Nil(t, err)
 		assert.Equal(t, fi.Mode().Perm(), fs.ModePerm)
 	})
 }
@@ -299,10 +298,10 @@ func TestLstatIfPossible(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.SymlinkIfPossible("test1.txt", "test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	fi, ok, err := gfs.LstatIfPossible("test2.txt")
 	assert.Nil(t, err)
@@ -315,10 +314,10 @@ func TestReadlinkIfPossible(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.SymlinkIfPossible("test1.txt", "test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	target, err := gfs.ReadlinkIfPossible("test2.txt")
 	assert.Nil(t, err)
@@ -329,7 +328,7 @@ func TestSymlinkIfPossible(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.SymlinkIfPossible("test1.txt", "test2.txt")
 	assert.Nil(t, err)
@@ -338,11 +337,11 @@ func TestSymlinkIfPossible(t *testing.T) {
 	assert.Nil(t, err)
 
 	target, err := gfs.Readlink("test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "test1.txt", target)
 
 	target, err = gfs.Readlink("test3.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "/test1.txt", target)
 }
 
@@ -350,16 +349,16 @@ func TestLink(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.Link("test1.txt", "test2.txt")
 	assert.Nil(t, err)
 
 	fi1, err := gfs.Stat("test1.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	fi2, err := gfs.Stat("test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	assert.Equal(t, fi1.Sys().(*guestfs.StatNS).St_ino, fi2.Sys().(*guestfs.StatNS).St_ino)
 }
@@ -368,31 +367,31 @@ func TestLchown(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = gfs.Symlink("test1.txt", "test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	stat, err := gfs.Lstat("test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	statns := stat.Sys().(*guestfs.StatNS)
 
-	assert.Equal(t, statns.St_uid, int64(0))
-	assert.Equal(t, statns.St_gid, int64(0))
+	require.Equal(t, statns.St_uid, int64(0))
+	require.Equal(t, statns.St_gid, int64(0))
 
 	err = gfs.Lchown("test2.txt", 1000, 1000)
 	assert.Nil(t, err)
 
 	stat, err = gfs.Lstat("test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	statns = stat.Sys().(*guestfs.StatNS)
 
 	assert.Equal(t, statns.St_uid, int64(1000))
 	assert.Equal(t, statns.St_gid, int64(1000))
 
 	stat, err = gfs.Stat("test2.txt")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	statns = stat.Sys().(*guestfs.StatNS)
 
 	assert.Equal(t, statns.St_uid, int64(0))
@@ -403,7 +402,7 @@ func TestTarOut(t *testing.T) {
 	clear(t, gfs)
 
 	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), fs.ModePerm)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	buf := bytes.NewBuffer(nil)
 	err = gfs.TarOut(".", buf)
@@ -419,7 +418,7 @@ func TestTarOut(t *testing.T) {
 		if err == io.EOF {
 			break
 		}
-		assert.Nil(t, err)
+		require.Nil(t, err)
 
 		hdrCopy := *hdr
 
@@ -467,13 +466,13 @@ func TestTarOut(t *testing.T) {
 
 func clear(t *testing.T, gfs *aferoguestfs.Fs) {
 	root, err := gfs.Open("/")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	dirnames, err := root.Readdirnames(-1)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	for _, dirname := range dirnames {
 		err = gfs.RemoveAll(filepath.Join("/", dirname))
-		assert.Nil(t, err)
+		require.Nil(t, err)
 	}
 }
