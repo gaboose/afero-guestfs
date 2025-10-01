@@ -1,6 +1,8 @@
 package aferoguestfs
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -169,6 +171,33 @@ func (fs *Fs) Lchown(name string, uid, gid int) error {
 	return wrapErr(fs.guestfs.Lchown(uid, gid, name), name)
 }
 
+// TarOut implements aferosync.TarOuter.
+func (fs *Fs) TarOut(dir string, w io.Writer) error {
+	dir = normalizePath(dir)
+
+	f, err := os.CreateTemp("", "afero-guestfs-tarout-*.tar")
+	if err != nil {
+		return fmt.Errorf("failed to create tmp tar: %w", err)
+	}
+	f.Close()
+	defer os.Remove(f.Name())
+
+	if err = fs.guestfs.Tar_out(dir, f.Name(), nil); err != nil {
+		return fmt.Errorf("failed to write tar: %w", err)
+	}
+
+	f, err = os.Open(f.Name())
+	if err != nil {
+		return fmt.Errorf("failed to open tar: %w", err)
+	}
+
+	if _, err := io.Copy(w, f); err != nil {
+		return fmt.Errorf("failed to copy: %w", err)
+	}
+
+	return nil
+}
+
 func (fs *Fs) exists(name string) error {
 	exists, err := fs.guestfs.Exists(name)
 	if err != nil {
@@ -188,7 +217,9 @@ func (fs *Fs) exists(name string) error {
 
 func normalizePath(path string) string {
 	path = filepath.Clean(path)
-	if path[0] != filepath.Separator {
+	if path == string('.') {
+		path = string(filepath.Separator)
+	} else if path[0] != filepath.Separator {
 		path = string(append([]rune{filepath.Separator}, []rune(path)...))
 	}
 	return path

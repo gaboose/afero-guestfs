@@ -1,6 +1,7 @@
 package aferoguestfs_test
 
 import (
+	"archive/tar"
 	"bytes"
 	_ "embed"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/gaboose/afero-guestfs/libguestfs.org/guestfs"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //go:embed testdata/test1.img
@@ -395,6 +397,72 @@ func TestLchown(t *testing.T) {
 
 	assert.Equal(t, statns.St_uid, int64(0))
 	assert.Equal(t, statns.St_gid, int64(0))
+}
+
+func TestTarOut(t *testing.T) {
+	clear(t, gfs)
+
+	err := afero.WriteFile(gfs, "test.txt", []byte("some text"), fs.ModePerm)
+	assert.Nil(t, err)
+
+	buf := bytes.NewBuffer(nil)
+	err = gfs.TarOut(".", buf)
+	assert.Nil(t, err)
+
+	tr := tar.NewReader(bytes.NewBuffer(buf.Bytes()))
+	actual := []struct {
+		Header tar.Header
+		Body   string
+	}{}
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		assert.Nil(t, err)
+
+		hdrCopy := *hdr
+
+		// ignore ModTime
+		hdrCopy.ModTime = time.Time{}
+
+		bodyBuf := bytes.NewBuffer(nil)
+		_, err = io.Copy(bodyBuf, tr)
+		require.Nil(t, err)
+
+		actual = append(actual, struct {
+			Header tar.Header
+			Body   string
+		}{
+			Header: hdrCopy,
+			Body:   bodyBuf.String(),
+		})
+	}
+
+	assert.Equal(t, []struct {
+		Header tar.Header
+		Body   string
+	}{{
+		Header: tar.Header{
+			Typeflag: tar.TypeDir,
+			Name:     "./",
+			Mode:     0755,
+			Uname:    "root",
+			Gname:    "root",
+			Format:   tar.FormatGNU,
+		},
+	}, {
+		Header: tar.Header{
+			Typeflag: tar.TypeReg,
+			Name:     "./test.txt",
+			Size:     9,
+			Mode:     int64(fs.ModePerm),
+			Uname:    "root",
+			Gname:    "root",
+			Format:   tar.FormatGNU,
+		},
+		Body: "some text",
+	}}, actual)
 }
 
 func clear(t *testing.T, gfs *aferoguestfs.Fs) {
