@@ -362,6 +362,41 @@ func TestLink(t *testing.T) {
 	assert.Equal(t, fi1.Sys().(*guestfs.StatNS).St_ino, fi2.Sys().(*guestfs.StatNS).St_ino)
 }
 
+func TestLchown(t *testing.T) {
+	clear(t, gfs)
+
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
+	assert.Nil(t, err)
+
+	err = gfs.Symlink("test1.txt", "test2.txt")
+	assert.Nil(t, err)
+
+	stat, err := gfs.Lstat("test2.txt")
+	assert.Nil(t, err)
+
+	statns := stat.Sys().(*guestfs.StatNS)
+
+	assert.Equal(t, statns.St_uid, int64(0))
+	assert.Equal(t, statns.St_gid, int64(0))
+
+	err = gfs.Lchown("test2.txt", 1000, 1000)
+	assert.Nil(t, err)
+
+	stat, err = gfs.Lstat("test2.txt")
+	assert.Nil(t, err)
+	statns = stat.Sys().(*guestfs.StatNS)
+
+	assert.Equal(t, statns.St_uid, int64(1000))
+	assert.Equal(t, statns.St_gid, int64(1000))
+
+	stat, err = gfs.Stat("test2.txt")
+	assert.Nil(t, err)
+	statns = stat.Sys().(*guestfs.StatNS)
+
+	assert.Equal(t, statns.St_uid, int64(0))
+	assert.Equal(t, statns.St_gid, int64(0))
+}
+
 func clear(t *testing.T, gfs *aferoguestfs.Fs) {
 	root, err := gfs.Open("/")
 	assert.Nil(t, err)

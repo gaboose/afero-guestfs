@@ -74,7 +74,22 @@ func (fi *fileInfo) Size() int64 {
 	return fi.stat.St_size
 }
 
-// Sys returns the underlying *guestfs.StatNS
+// Sys returns the underlying *guestfs.StatNS.
 func (f *fileInfo) Sys() any {
 	return f.stat
+}
+
+// UID implements aferosync.FileInfoOwner
+func (f *fileInfo) Uid() int64 {
+	return f.stat.St_uid
+}
+
+// GID implements aferosync.FileInfoOwner
+func (f *fileInfo) Gid() int64 {
+	return f.stat.St_gid
+}
+
+// Ino implements aferosync.FileInfoInoer.
+func (f *fileInfo) Ino() int64 {
+	return f.stat.St_ino
 }

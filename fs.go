@@ -163,6 +163,12 @@ func (fs *Fs) Link(oldname string, newname string) error {
 	return wrapErr(fs.guestfs.Ln(oldname, newname), newname)
 }
 
+// Lchown implements aferosync.Lchowner.
+func (fs *Fs) Lchown(name string, uid, gid int) error {
+	name = normalizePath(name)
+	return wrapErr(fs.guestfs.Lchown(uid, gid, name), name)
+}
+
 func (fs *Fs) exists(name string) error {
 	exists, err := fs.guestfs.Exists(name)
 	if err != nil {
