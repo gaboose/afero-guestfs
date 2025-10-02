@@ -123,6 +123,25 @@ func TestChmod(t *testing.T) {
 	assert.Equal(t, stat.Mode(), os.FileMode(0777))
 }
 
+func TestChmodSticky(t *testing.T) {
+	clear(t, gfs)
+
+	err := gfs.Mkdir("tmp", 0644)
+	require.Nil(t, err)
+
+	stat, err := gfs.Stat("tmp")
+	require.Nil(t, err)
+	require.Equal(t, stat.Mode(), os.FileMode(0644)|os.ModeDir)
+
+	err = gfs.Chmod("tmp", os.FileMode(0644)|os.ModeDir|os.ModeSticky)
+	assert.Nil(t, err)
+
+	stat, err = gfs.Stat("tmp")
+	require.Nil(t, err)
+
+	assert.Equal(t, stat.Mode(), os.FileMode(0644)|os.ModeDir|os.ModeSticky)
+}
+
 func TestChown(t *testing.T) {
 	clear(t, gfs)
 

@@ -25,7 +25,7 @@ func New(g *guestfs.Guestfs) *Fs {
 // Chmod implements afero.Fs.
 func (fs *Fs) Chmod(name string, mode os.FileMode) error {
 	name = normalizePath(name)
-	return wrapErr(fs.guestfs.Chmod(int(mode), name), name)
+	return wrapErr(fs.guestfs.Chmod(int(posixMode(mode)), name), name)
 }
 
 // Chown implements afero.Fs.
@@ -48,7 +48,7 @@ func (fs *Fs) Create(name string) (afero.File, error) {
 // Mkdir implements afero.Fs.
 func (fs *Fs) Mkdir(name string, perm os.FileMode) error {
 	name = normalizePath(name)
-	return wrapErr(fs.guestfs.Mkdir_mode(name, int(perm)), name)
+	return wrapErr(fs.guestfs.Mkdir_mode(name, int(posixMode(perm))), name)
 }
 
 // MkdirAll implements afero.Fs.
@@ -223,4 +223,19 @@ func normalizePath(path string) string {
 		path = string(append([]rune{filepath.Separator}, []rune(path)...))
 	}
 	return path
+}
+
+// reference: /usr/local/go/src/os/file_posix.go
+func posixMode(i os.FileMode) (o uint32) {
+	o |= uint32(i.Perm())
+	if i&os.ModeSetuid != 0 {
+		o |= syscall.S_ISUID
+	}
+	if i&os.ModeSetgid != 0 {
+		o |= syscall.S_ISGID
+	}
+	if i&os.ModeSticky != 0 {
+		o |= syscall.S_ISVTX
+	}
+	return
 }

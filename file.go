@@ -93,7 +93,7 @@ func (f *file) Close() error {
 			return wrapErr(err, f.name)
 		}
 		if !f.fileExists {
-			if err := f.fs.guestfs.Chmod(int(f.perm), f.name); err != nil {
+			if err := f.fs.guestfs.Chmod(int(posixMode(f.perm)), f.name); err != nil {
 				return wrapErr(err, f.name)
 			}
 		}
