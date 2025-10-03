@@ -44,12 +44,12 @@ func newFile(fs *Fs, name string, flag int, perm os.FileMode) (*file, error) {
 		return nil, os.ErrExist
 	}
 
-	if !ret.fileExists {
-		if flag&os.O_CREATE != 0 {
-			// trigger file creation on close even if nothing is written
-			ret.modified = true
-		}
+	if flag&os.O_CREATE != 0 && (!ret.fileExists || os.O_TRUNC != 0) {
+		// trigger file write on close even if nothing is written
+		ret.modified = true
+	}
 
+	if !ret.fileExists {
 		return ret, nil
 	}
 

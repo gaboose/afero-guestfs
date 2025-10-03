@@ -195,6 +195,21 @@ func TestCreate(t *testing.T) {
 	assert.True(t, exists)
 }
 
+func TestCreateOverwriteWithEmpty(t *testing.T) {
+	clear(t, gfs)
+
+	require.Nil(t, afero.WriteFile(gfs, "test.txt", []byte("some text"), fs.ModePerm))
+
+	f, err := gfs.Create("test.txt")
+	require.Nil(t, err)
+	require.Nil(t, f.Close())
+
+	actual, err := afero.ReadFile(gfs, "test.txt")
+	require.Nil(t, err)
+
+	assert.Equal(t, []byte{}, actual)
+}
+
 func TestMkdir(t *testing.T) {
 	clear(t, gfs)
 
