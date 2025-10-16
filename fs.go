@@ -198,6 +198,38 @@ func (fs *Fs) TarOut(dir string, w io.Writer) error {
 	return nil
 }
 
+// AllPaths implements aferosync.AllPathser.
+func (fs *Fs) AllPaths() ([]string, error) {
+	mps, err := fs.guestfs.Mountpoints()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mountpoints: %w", err)
+	}
+
+	var device string
+	for d, path := range mps {
+		if path == "/" {
+			device = d
+			break
+		}
+	}
+	if device == "" {
+		return nil, fmt.Errorf("nothing mounted at root")
+	}
+
+	ents, err := fs.guestfs.Filesystem_walk(device)
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk device %s: %w", device, err)
+	}
+
+	paths := make([]string, 0, len(*ents))
+
+	for _, e := range *ents {
+		paths = append(paths, e.Tsk_name)
+	}
+
+	return paths, nil
+}
+
 func (fs *Fs) exists(name string) error {
 	exists, err := fs.guestfs.Exists(name)
 	if err != nil {

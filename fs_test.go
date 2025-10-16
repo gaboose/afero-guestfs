@@ -498,6 +498,36 @@ func TestTarOut(t *testing.T) {
 	}}, actual)
 }
 
+func TestAllPaths(t *testing.T) {
+	clear(t, gfs)
+
+	err := afero.WriteFile(gfs, "test1.txt", []byte("some text"), os.ModePerm)
+	require.Nil(t, err)
+
+	err = gfs.Mkdir("testdir", os.ModePerm)
+	require.Nil(t, err)
+
+	err = afero.WriteFile(gfs, "testdir/test2.txt", []byte("some more text"), os.ModePerm)
+	require.Nil(t, err)
+
+	paths, err := gfs.AllPaths()
+	assert.Nil(t, err)
+
+	// Ignore paths that don't exist. guestfs.Filesystem_walk returns $OrphanFiles
+	// which is not visible by Stat.
+	for i := 0; i < len(paths); i++ {
+		ok, err := afero.Exists(gfs, paths[i])
+		require.Nil(t, err)
+		if !ok {
+			paths = append(paths[:i], paths[i+1:]...)
+		}
+	}
+
+	assert.Equal(t, []string{
+		".", "test1.txt", "testdir", "testdir/test2.txt",
+	}, paths)
+}
+
 func clear(t *testing.T, gfs *aferoguestfs.Fs) {
 	root, err := gfs.Open("/")
 	require.Nil(t, err)
