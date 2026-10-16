@@ -1,7 +1,7 @@
 update bindings:
     #!/usr/bin/env bash
     set -euxo pipefail
-    VERSION=1.56.2
+    VERSION=1.60.1
 
     TARGET="libguestfs.org"
     MARKER="$TARGET/.version"

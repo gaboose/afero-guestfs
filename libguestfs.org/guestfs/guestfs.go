@@ -275,7 +275,7 @@ type Application2 struct {
     App2_source_package string
     App2_summary string
     App2_description string
-    App2_spare1 string
+    App2_class string
     App2_spare2 string
     App2_spare3 string
     App2_spare4 string
@@ -296,7 +296,7 @@ func return_Application2 (c *C.struct_guestfs_application2) *Application2 {
     r.App2_source_package = C.GoString (c.app2_source_package)
     r.App2_summary = C.GoString (c.app2_summary)
     r.App2_description = C.GoString (c.app2_description)
-    r.App2_spare1 = C.GoString (c.app2_spare1)
+    r.App2_class = C.GoString (c.app2_class)
     r.App2_spare2 = C.GoString (c.app2_spare2)
     r.App2_spare3 = C.GoString (c.app2_spare3)
     r.App2_spare4 = C.GoString (c.app2_spare4)
@@ -6661,6 +6661,23 @@ func (g *Guestfs) Inspect_get_windows_current_control_set (root string) (string,
     return C.GoString (r), nil
 }
 
+/* inspect_get_windows_group_policy : return if Windows guest has group policy */
+func (g *Guestfs) Inspect_get_windows_group_policy (root string) (bool, error) {
+    if g.g == nil {
+        return false, closed_handle_error ("inspect_get_windows_group_policy")
+    }
+
+    c_root := C.CString (root)
+    defer C.free (unsafe.Pointer (c_root))
+
+    r := C.guestfs_inspect_get_windows_group_policy (g.g, c_root)
+
+    if r == -1 {
+        return false, get_error_from_handle (g, "inspect_get_windows_group_policy")
+    }
+    return r != 0, nil
+}
+
 /* inspect_get_windows_software_hive : get the path of the Windows software hive */
 func (g *Guestfs) Inspect_get_windows_software_hive (root string) (string, error) {
     if g.g == nil {
@@ -10790,6 +10807,40 @@ func (g *Guestfs) Ntfs_3g_probe (rw bool, device string) (int, error) {
     return int (r), nil
 }
 
+/* Struct carrying optional arguments for Ntfs_chmod */
+type OptargsNtfs_chmod struct {
+    /* Recursive field is ignored unless Recursive_is_set == true */
+    Recursive_is_set bool
+    Recursive bool
+}
+
+/* ntfs_chmod : change file permissions on NTFS filesystem */
+func (g *Guestfs) Ntfs_chmod (device string, mode int, path string, optargs *OptargsNtfs_chmod) error {
+    if g.g == nil {
+        return closed_handle_error ("ntfs_chmod")
+    }
+
+    c_device := C.CString (device)
+    defer C.free (unsafe.Pointer (c_device))
+
+    c_path := C.CString (path)
+    defer C.free (unsafe.Pointer (c_path))
+    c_optargs := C.struct_guestfs_ntfs_chmod_argv{}
+    if optargs != nil {
+        if optargs.Recursive_is_set {
+            c_optargs.bitmask |= C.GUESTFS_NTFS_CHMOD_RECURSIVE_BITMASK
+            if optargs.Recursive { c_optargs.recursive = 1 } else { c_optargs.recursive = 0}
+        }
+    }
+
+    r := C.guestfs_ntfs_chmod_argv (g.g, c_device, C.int (mode), c_path, &c_optargs)
+
+    if r == -1 {
+        return get_error_from_handle (g, "ntfs_chmod")
+    }
+    return nil
+}
+
 /* ntfscat_i : download a file to the local machine given its inode */
 func (g *Guestfs) Ntfscat_i (device string, inode int64, filename string) error {
     if g.g == nil {
@@ -12869,6 +12920,40 @@ func (g *Guestfs) Setcon (context string) error {
     return nil
 }
 
+/* Struct carrying optional arguments for Setfiles */
+type OptargsSetfiles struct {
+    /* Force field is ignored unless Force_is_set == true */
+    Force_is_set bool
+    Force bool
+}
+
+/* setfiles : low level relabel parts of the filesystem */
+func (g *Guestfs) Setfiles (specfile string, paths []string, optargs *OptargsSetfiles) error {
+    if g.g == nil {
+        return closed_handle_error ("setfiles")
+    }
+
+    c_specfile := C.CString (specfile)
+    defer C.free (unsafe.Pointer (c_specfile))
+
+    c_paths := arg_string_list (paths)
+    defer free_string_list (c_paths)
+    c_optargs := C.struct_guestfs_setfiles_argv{}
+    if optargs != nil {
+        if optargs.Force_is_set {
+            c_optargs.bitmask |= C.GUESTFS_SETFILES_FORCE_BITMASK
+            if optargs.Force { c_optargs.force = 1 } else { c_optargs.force = 0}
+        }
+    }
+
+    r := C.guestfs_setfiles_argv (g.g, c_specfile, c_paths, &c_optargs)
+
+    if r == -1 {
+        return get_error_from_handle (g, "setfiles")
+    }
+    return nil
+}
+
 /* setxattr : set extended attribute of a file or directory */
 func (g *Guestfs) Setxattr (xattr string, val string, vallen int, path string) error {
     if g.g == nil {
@@ -13415,6 +13500,9 @@ type OptargsTar_in struct {
     /* Acls field is ignored unless Acls_is_set == true */
     Acls_is_set bool
     Acls bool
+    /* Keepdirlink field is ignored unless Keepdirlink_is_set == true */
+    Keepdirlink_is_set bool
+    Keepdirlink bool
 }
 
 /* tar_in : unpack tarfile to directory */
@@ -13446,6 +13534,10 @@ func (g *Guestfs) Tar_in (tarfile string, directory string, optargs *OptargsTar_
         if optargs.Acls_is_set {
             c_optargs.bitmask |= C.GUESTFS_TAR_IN_OPTS_ACLS_BITMASK
             if optargs.Acls { c_optargs.acls = 1 } else { c_optargs.acls = 0}
+        }
+        if optargs.Keepdirlink_is_set {
+            c_optargs.bitmask |= C.GUESTFS_TAR_IN_OPTS_KEEPDIRLINK_BITMASK
+            if optargs.Keepdirlink { c_optargs.keepdirlink = 1 } else { c_optargs.keepdirlink = 0}
         }
     }
 
@@ -14589,7 +14681,7 @@ func (g *Guestfs) Xfs_growfs (path string, optargs *OptargsXfs_growfs) error {
     return nil
 }
 
-/* xfs_info : get geometry of XFS filesystem */
+/* xfs_info : get information about the XFS filesystem */
 func (g *Guestfs) Xfs_info (pathordevice string) (*XFSInfo, error) {
     if g.g == nil {
         return &XFSInfo{}, closed_handle_error ("xfs_info")
@@ -14605,6 +14697,24 @@ func (g *Guestfs) Xfs_info (pathordevice string) (*XFSInfo, error) {
     }
     defer C.guestfs_free_xfsinfo (r)
     return return_XFSInfo (r), nil
+}
+
+/* xfs_info2 : get information about the XFS filesystem */
+func (g *Guestfs) Xfs_info2 (pathordevice string) (map[string]string, error) {
+    if g.g == nil {
+        return nil, closed_handle_error ("xfs_info2")
+    }
+
+    c_pathordevice := C.CString (pathordevice)
+    defer C.free (unsafe.Pointer (c_pathordevice))
+
+    r := C.guestfs_xfs_info2 (g.g, c_pathordevice)
+
+    if r == nil {
+        return nil, get_error_from_handle (g, "xfs_info2")
+    }
+    defer free_string_list (r)
+    return return_hashtable (r), nil
 }
 
 /* Struct carrying optional arguments for Xfs_repair */
